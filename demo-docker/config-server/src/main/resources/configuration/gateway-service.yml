@@ -1,0 +1,7 @@
+# routing   
+zuul:
+  routes:
+    customer:
+      serviceId: customer-service
+    host:
+      socket-timeout-millis: 3000

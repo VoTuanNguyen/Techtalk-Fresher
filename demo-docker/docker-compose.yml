@@ -1,0 +1,87 @@
+version: '3'
+services:
+  eureka-discovery:
+    container_name: eureka-discovery
+    image: eureka-server
+    build: ./eureka-discovery
+    restart: on-failure
+    hostname: eureka-discovery
+    expose:
+      - 8761
+    ports:
+      - 8761:8761
+
+  config-server:
+    image: config-server
+    container_name: config-server
+    build: ./config-server
+    restart: on-failure
+    hostname: config-server
+    expose:
+      - 8888
+    ports:
+      - 8888:8888
+    links:
+      - eureka-discovery
+    depends_on: 
+     - eureka-discovery
+    command: >
+      /bin/bash -c "
+        while ! nc -z eureka-discovery 8761;
+        do
+          echo sleeping;
+          sleep 1;
+        done;
+        echo Connected!;
+      "
+
+  customer-service:
+    image: customer-service
+    container_name: customer-service
+    hostname: customer-service
+    build: ./customer-service
+    restart: on-failure
+    expose:
+      - 7070
+    ports:
+      - 7070:7070
+    links:
+      - eureka-discovery
+      - config-server
+    depends_on:
+      - eureka-discovery
+      - config-server
+    command: >
+      /bin/bash -c "
+        while ! nc -z config-server 8888;
+        do
+          echo sleeping;
+          sleep 1;
+        done;
+        echo Connected!;
+      "
+
+  gateway-service:
+    image: gateway-service
+    container_name: gateway-service
+    hostname: gateway-service
+    build: ./gateway-service
+    restart: on-failure
+    expose:
+      - 8080
+    ports:
+      - 8080:8080
+    links:
+      - eureka-discovery
+    depends_on:
+      - eureka-discovery
+      - config-server
+    command: >
+      /bin/bash -c "
+        while ! nc -z config-server 8888;
+        do
+          echo sleeping;
+          sleep 1;
+        done;
+        echo Connected!;
+      "
