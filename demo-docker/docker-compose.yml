@@ -35,6 +35,32 @@ services:
         echo Connected!;
       "
 
+  oauth-service:
+    image: oauth-service
+    container_name: oauth-service
+    hostname: oauth-service
+    build: ./auth-service
+    restart: on-failure
+    expose:
+      - 9000
+    ports:
+      - 9000:9000
+    links:
+      - eureka-discovery
+      - config-server
+    depends_on:
+      - eureka-discovery
+      - config-server
+    command: >
+      /bin/bash -c "
+        while ! nc -z config-server 8888;
+        do
+          echo sleeping;
+          sleep 1;
+        done;
+        echo Connected!;
+      "
+
   customer-service:
     image: customer-service
     container_name: customer-service
